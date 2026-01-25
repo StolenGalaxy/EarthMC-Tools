@@ -64,15 +64,18 @@ class Main:
                     if self.recent_players[player_name].time_since_visible > player_activity_timeout:
                         self.recent_players.pop(player_name)
 
-    # def calculate_player_seperation(self, player_1_name, player_2_name):
+    def calculate_player_separation(self, player_1_name: str, player_2_name: str) -> int:
 
-    #     player_1 = self.recent_players[player_1_name]
-    #     player_2 = self.recent_players[player_2_name]
+        # check players are recent
+        if player_1_name in self.recent_players and player_2_name in self.recent_players:
+            player_1 = self.recent_players[player_1_name]
+            player_2 = self.recent_players[player_2_name]
 
-    #     x_distance = abs(player_2.coords.X - player_1.coords.X)
-    #     z_distance = abs(player_2.coords.Z - player_1.coords.Z)
+            x_gap = abs(player_2.coords.X - player_1.coords.X)
+            z_gap = abs(player_2.coords.Z - player_2.coords.Z)
 
-    #     print(x_distance, z_distance)
+            separation = int((x_gap**2 + z_gap**2)**(1/2))
+            return separation
 
     def run(self):
         while True:
@@ -83,8 +86,6 @@ class Main:
             print("\n\n-----------------------------")
 
             sleep(refresh_delay)
-
-
 
 
 main = Main(my_name="")
