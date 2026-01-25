@@ -56,9 +56,13 @@ class Main:
 
         for player_name in self.logged_players:
             if player_name not in self.visible_players:
-                self.recent_players[player_name].is_visible = False
-                self.recent_players[player_name].time_since_visible += refresh_delay
 
+                if player_name in self.recent_players:
+                    self.recent_players[player_name].is_visible = False
+                    self.recent_players[player_name].time_since_visible += refresh_delay
+
+                    if self.recent_players[player_name].time_since_visible > player_activity_timeout:
+                        self.recent_players.pop(player_name)
 
     # def calculate_player_seperation(self, player_1_name, player_2_name):
 
@@ -73,6 +77,10 @@ class Main:
     def run(self):
         while True:
             self.refresh_player_data()
+
+            print("-----------------------------\n\n")
+            print(f"Currently visible players: {len(self.visible_players)}\nRecently visible players: {len(self.recent_players)}\nAll known players: {len(self.logged_players)}")
+            print("\n\n-----------------------------")
 
             sleep(refresh_delay)
 
