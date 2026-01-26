@@ -11,8 +11,9 @@ from shapely.geometry.polygon import Polygon
 PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
 
-refresh_delay = 3
-player_activity_timeout = 12
+refresh_delay = 1
+player_activity_timeout = 60
+refresh_base_data_timer = 300
 
 
 class Player:
@@ -100,13 +101,13 @@ class Main:
 
 
         # Displaying map
-        fig, ax = plt.subplots()
+        # fig, ax = plt.subplots()
 
-        collection = PolyCollection(map, facecolor="red", edgecolor="black")
+        # collection = PolyCollection(map, facecolor="red", edgecolor="black")
 
-        ax.add_collection(collection)
+        # ax.add_collection(collection)
 
-        ax.autoscale_view()
+        # ax.autoscale_view()
         #plt.show()
 
     def get_player_visibility_status(self, player_name):
@@ -138,7 +139,7 @@ class Main:
             in_town = self.is_player_in_town(player)
             if not in_town:
                 out_of_town_players.append(player)
-        return out_of_town_players
+        return sorted(out_of_town_players)
 
     def calculate_player_separation(self, player_1_name: str, player_2_name: str) -> int:
 
@@ -160,9 +161,13 @@ class Main:
         return distance
 
     def run(self):
+        self.get_base_data()
         while True:
             self.refresh_player_data()
-            self.get_base_data()
+
+            number_of_refreshes = 0
+            if number_of_refreshes * refresh_delay > refresh_base_data_timer:
+                self.get_base_data()
             print(self.find_out_of_town_players())
 
 
