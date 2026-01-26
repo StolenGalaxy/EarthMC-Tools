@@ -4,11 +4,15 @@ from time import sleep
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+
+
 PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
 
-refresh_delay = 30
-player_activity_timeout = 120
+refresh_delay = 3
+player_activity_timeout = 12
 
 
 class Player:
@@ -72,22 +76,30 @@ class Main:
 
         towns = response[0]["markers"]
 
-        i = 0
         map = []
+
+        # towns_coords and town_coords is specifically for determining whether a point is in any town
+        # visualisation_coords is for visualising coordinates (both require a different format)
+        towns_coords = []
 
         for town in towns:
             if "points" in str(town):
-                i += 1
-                print(i)
 
                 border_points = town["points"][0][0]
 
-                coordinates = []
+                visualisation_coords = []
+                town_coords = []
                 for point in border_points:
-                    coordinate = [point["x"], point["z"] * -1]
-                    coordinates.append(coordinate)
-                map.append(coordinates)
+                    visualisation_coords.append([point["x"], point["z"] * -1])
 
+                    town_coords.append((point["x"], point["z"]))
+                towns_coords.append(town_coords)
+                self.towns_coords = towns_coords
+
+                map.append(visualisation_coords)
+
+
+        # Displaying map
         fig, ax = plt.subplots()
 
         collection = PolyCollection(map, facecolor="red", edgecolor="black")
@@ -95,18 +107,40 @@ class Main:
         ax.add_collection(collection)
 
         ax.autoscale_view()
-        plt.show()
+        #plt.show()
+
+    def get_player_visibility_status(self, player_name):
+        if player_name in self.visible_players:
+            return "visible"
+        elif player_name in self.recent_players:
+            return "recent"
+        elif player_name in self.logged_players:
+            return "logged"
+        else:
+            return "unknown"
+
+    def is_player_in_town(self, player_name):
+
+        player_coords = self.recent_players[player_name].coords
+
+        point = Point(player_coords.X, player_coords.Z)
+
+        in_a_town = False
+        for town_coords in self.towns_coords:
+            town_shape = Polygon(town_coords)
+            if town_shape.contains(point):
+                in_a_town = True
+        return in_a_town
+
+    def find_out_of_town_players(self):
+        out_of_town_players = []
+        for player in self.recent_players:
+            in_town = self.is_player_in_town(player)
+            if not in_town:
+                out_of_town_players.append(player)
+        return out_of_town_players
 
     def calculate_player_separation(self, player_1_name: str, player_2_name: str) -> int:
-        """Calculates the distance between two players based on their last known positions
-
-        Args:
-            player_1_name (str): Name of first player
-            player_2_name (str): Name of second player
-
-        Returns:
-            int: Distance between the two players
-        """
 
         # check players are recent
         if player_1_name in self.recent_players and player_2_name in self.recent_players:
@@ -120,14 +154,7 @@ class Main:
             return separation
 
     def calculate_distance_to_player(self, target_player: str) -> int:
-        """calculate_player_separation() wrapper to find distance between specifically self to target player
 
-        Args:
-            target_player (str): Name of the player of whom to find distance between self to
-
-        Returns:
-            int: Distance between the two players
-        """
         distance = self.calculate_player_separation(self.my_name, target_player)
 
         return distance
@@ -136,6 +163,8 @@ class Main:
         while True:
             self.refresh_player_data()
             self.get_base_data()
+            print(self.find_out_of_town_players())
+
 
             #print("-----------------------------\n\n")
             #print(f"Currently visible players: {len(self.visible_players)}\nRecently visible players: {len(self.recent_players)}\nAll known players: {len(self.logged_players)}")
