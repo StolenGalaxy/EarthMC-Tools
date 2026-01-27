@@ -39,7 +39,7 @@ class Main:
 
         self.already_plotted = False
 
-        self.nation_spawns = {}
+
 
         self.recent_players = {}  # Visible in short term
         self.logged_players = []  # Visible at any point
@@ -93,6 +93,8 @@ class Main:
         towns = response[0]["markers"]
 
         map = []
+
+        self.nation_spawns = {}
 
         # towns_coords and town_coords is specifically for determining whether a point is in any town
         # visualisation_coords is for visualising coordinates (both require a different format)
@@ -157,6 +159,13 @@ class Main:
                 out_of_town_players.append(player)
         return sorted(out_of_town_players)
 
+    def calculate_coords_separation(self, coords_1, coords_2):
+        x_gap = abs(coords_2.X - coords_1.X)
+        z_gap = abs(coords_2.Z - coords_1.Z)
+
+        separation = int((x_gap**2 + z_gap**2)**(1/2))
+        return separation
+
     def calculate_player_separation(self, player_1_name: str, player_2_name: str) -> int:
 
         # check players are recent
@@ -164,17 +173,24 @@ class Main:
             player_1 = self.recent_players[player_1_name]
             player_2 = self.recent_players[player_2_name]
 
-            x_gap = abs(player_2.coords.X - player_1.coords.X)
-            z_gap = abs(player_2.coords.Z - player_2.coords.Z)
-
-            separation = int((x_gap**2 + z_gap**2)**(1/2))
+            separation = self.calculate_coords_separation(player_1.coords, player_2.coords)
             return separation
 
     def calculate_distance_to_player(self, target_player: str) -> int:
 
         distance = self.calculate_player_separation(self.my_name, target_player)
-
         return distance
+
+    def find_nearest_nation_spawn(self, coords):
+        closest_spawn = ""
+        closest_spawn_distance = 999999
+        for nation_spawn in self.nation_spawns:
+            distance = self.calculate_coords_separation(coords, self.nation_spawns[nation_spawn])
+            if distance < closest_spawn_distance:
+                closest_spawn_distance = distance
+                closest_spawn = nation_spawn
+        print("closest nation spawn is:", closest_spawn, "distance is:", closest_spawn_distance)
+
 
     def run(self):
         number_of_refreshes = 0
