@@ -9,6 +9,8 @@ from shapely.geometry.polygon import Polygon
 
 from multiprocessing import Process
 
+import pyperclip
+
 PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
 
@@ -235,6 +237,9 @@ class Main:
             print("-----------------------------\n\n")
             print(f"Optimal target: {target_data[0]}\nCoordinates: ({target_data[1].X}, {target_data[1].Z})\nNearest nation spawn is {target_data[2]} which is {target_data[3]} blocks away")
             print("\n\n-----------------------------")
+
+            pyperclip.copy(f"#goto {target_data[1].X} {target_data[1].Z}")
+
 
 
             #print(f"Currently visible players: {len(self.visible_players)}\nRecently visible players: {len(self.recent_players)}\nAll known players: {len(self.logged_players)}")
