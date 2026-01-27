@@ -117,9 +117,15 @@ class Main:
                 nation_name = str(town["tooltip"]).split("(Capital of ")[1]
                 nation_name = (nation_name.split(")\n")[0]).strip()
 
-                nation_spawn_point = Coordinates(town["point"]["x"], 0, town["point"]["z"])
+                blacklisted_nation_spawns = []
+                with open("blacklisted_spawns.csv", "r") as file:
+                    for line in file:
+                        blacklisted_nation_spawns.append(line.strip())
 
-                self.nation_spawns[nation_name] = nation_spawn_point
+                if nation_name not in blacklisted_nation_spawns:
+                    nation_spawn_point = Coordinates(town["point"]["x"], 0, town["point"]["z"])
+
+                    self.nation_spawns[nation_name] = nation_spawn_point
 
         if not self.already_plotted:
             self.already_plotted = True
