@@ -14,7 +14,7 @@ MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.js
 
 refresh_delay = 1
 player_activity_timeout = 60
-refresh_base_data_timer = 0
+refresh_base_data_timer = 300
 
 
 class Player:
