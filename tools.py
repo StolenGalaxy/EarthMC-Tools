@@ -1,48 +1,13 @@
+from definitions import Player, Coordinates
 from requests import get
-from time import sleep
-
-import matplotlib.pyplot as plt
-from matplotlib.collections import PolyCollection
-
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-
-from multiprocessing import Process
-
-import pyperclip
 
 PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
 
-refresh_delay = 10
-player_activity_timeout = 15
-base_refresh_delay = 120
 
-
-class Player:
+class Data:
     def __init__(self):
-        self.name = ""
-        self.coords = ""
-
-        self.is_visible = True
-        self.time_since_visible = 0
-
-
-class Coordinates:
-    def __init__(self, X: int, Y: int, Z: int):
-        self.X = X
-        self.Y = Y
-        self.Z = Z
-
-
-class Main:
-    def __init__(self, my_name: str):
-        self.my_name = my_name
-
-        self.already_plotted = False
-
-        self.recent_players = {}  # Visible in short term
-        self.logged_players = []  # Visible at any point
+        pass
 
     def refresh_player_data(self) -> list:
         self.visible_players = []  # Visible right now
@@ -77,17 +42,7 @@ class Main:
                     if self.recent_players[player_name].time_since_visible > player_activity_timeout:
                         self.recent_players.pop(player_name)
 
-    def plot_map(self, map):
-        fig, ax = plt.subplots()
-
-        collection = PolyCollection(map, facecolor="red", edgecolor="black")
-
-        ax.add_collection(collection)
-
-        ax.autoscale_view()
-        plt.show()
-
-    def get_base_data(self):
+    def refresh_base_data(self):
         response = get(MARKERS_ENDPOINT).json()
 
         towns = response[0]["markers"]
@@ -133,8 +88,15 @@ class Main:
         if not self.already_plotted:
             self.already_plotted = True
             # uncomment to enable map
-            #plot_process = Process(target=self.plot_map, args=(map, ))
-            #plot_process.start()
+            plot_process = Process(target=self.plot_map, args=(map, ))
+            plot_process.start()
+
+
+class Calculator:
+    def __init__(self, my_name: str):
+        self.my_name = my_name
+
+        self.already_plotted = False
 
     def get_player_visibility_status(self, player_name):
         if player_name in self.visible_players:
@@ -149,15 +111,6 @@ class Main:
     def is_player_in_town(self, player_name):
 
         player_coords = self.recent_players[player_name].coords
-
-        point = Point(player_coords.X, player_coords.Z)
-
-        in_a_town = False
-        for town_coords in self.towns_coords:
-            town_shape = Polygon(town_coords)
-            if town_shape.contains(point):
-                in_a_town = True
-        return in_a_town
 
     def find_out_of_town_players(self):
         out_of_town_players = []
@@ -203,65 +156,3 @@ class Main:
         coords = self.recent_players[player_name].coords
         closest_spawn = self.find_nearest_nation_spawn(coords)
         return closest_spawn
-
-    def find_optimal_target_with_spawn(self) -> tuple[str, str]:
-        potential_targets = self.find_out_of_town_players()
-        if self.my_name in potential_targets:
-            potential_targets.remove(self.my_name)
-
-        shortest_distance = 999999
-        optimal_target = ""
-        closest_spawn = ""
-        player_coords = ""
-
-        blacklisted_players = []
-
-        with open("blacklisted_players.csv", "r") as file:
-            for line in file.readlines():
-                blacklisted_players.append(line.strip().lower())
-
-        for target in potential_targets:
-
-            if target.lower() in blacklisted_players:
-                continue
-
-            closest_nation_spawn = self.find_nearest_nation_spawn_to_player(target)
-
-            distance = closest_nation_spawn[1]
-
-            if distance < shortest_distance:
-                shortest_distance = distance
-                optimal_target = target
-                closest_spawn = closest_nation_spawn[0]
-                player_coords = self.recent_players[target].coords
-
-        return (optimal_target, player_coords, closest_spawn, shortest_distance)
-
-    def run(self):
-        number_of_refreshes = 0
-        while True:
-            self.refresh_player_data()
-
-            if number_of_refreshes * refresh_delay > base_refresh_delay or number_of_refreshes == 0:
-                self.get_base_data()
-                number_of_refreshes = 0
-
-            target_data = self.find_optimal_target_with_spawn()
-            print("-----------------------------\n\n")
-            print(f"Optimal target: {target_data[0]}\nCoordinates: ({target_data[1].X}, {target_data[1].Z})\nNearest nation spawn is {target_data[2]} which is {target_data[3]} blocks away")
-            print("\n\n-----------------------------")
-
-            pyperclip.copy(f"#goto {target_data[1].X} {target_data[1].Z}")
-
-
-
-            #print(f"Currently visible players: {len(self.visible_players)}\nRecently visible players: {len(self.recent_players)}\nAll known players: {len(self.logged_players)}")
-
-            sleep(refresh_delay)
-            number_of_refreshes += 1
-
-
-main = Main(my_name="")
-
-if __name__ == "__main__":
-    main.run()
