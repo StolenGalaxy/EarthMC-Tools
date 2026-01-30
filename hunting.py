@@ -1,23 +1,21 @@
-from requests import get
 from time import sleep
-
-from multiprocessing import Process
 
 import pyperclip
 
 refresh_delay = 10
-player_activity_timeout = 15
+player_activity_timeout = 30
 base_refresh_delay = 120
 
 
 class Hunter:
-    def __init__(self, calculator: GeneralCalculations, data: GetData):
+    def __init__(self, calculator, prefs):
         self.calculator = calculator
 
+        self.player_refresh_delay = prefs["player_data_refresh_delay"]
+        self.base_refresh_delay = prefs["base_data_refresh_delay"]
+
     def find_optimal_target_with_spawn(self) -> tuple[str, str]:
-        potential_targets = self.find_out_of_town_players()
-        if self.my_name in potential_targets:
-            potential_targets.remove(self.my_name)
+        potential_targets = self.calculator.find_out_of_town_players()
 
         shortest_distance = 999999
         optimal_target = ""
@@ -35,7 +33,7 @@ class Hunter:
             if target.lower() in blacklisted_players:
                 continue
 
-            closest_nation_spawn = self.find_nearest_nation_spawn_to_player(target)
+            closest_nation_spawn = self.calculator.find_nearest_nation_spawn_to_player(target)
 
             distance = closest_nation_spawn[1]
 
@@ -43,17 +41,17 @@ class Hunter:
                 shortest_distance = distance
                 optimal_target = target
                 closest_spawn = closest_nation_spawn[0]
-                player_coords = self.recent_players[target].coords
+                player_coords = self.calculator.recent_players[target].coords
 
         return (optimal_target, player_coords, closest_spawn, shortest_distance)
 
-    def run(self,):
+    def run(self):
         number_of_refreshes = 0
         while True:
-            self.data.refresh_player_data()
+            self.calculator.refresh_player_data()
 
             if number_of_refreshes * refresh_delay > base_refresh_delay or number_of_refreshes == 0:
-                self.data.refresh_base_data()
+                self.calculator.refresh_base_data()
                 number_of_refreshes = 0
 
             target_data = self.find_optimal_target_with_spawn()

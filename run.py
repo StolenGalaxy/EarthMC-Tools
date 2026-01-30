@@ -1,24 +1,28 @@
 from hunting import Hunter
-from tools import Calculator, Data
+from tools import Calculator
 
 
 # Preferences
-self_ign = ""
-player_data_refresh_delay = 15
-base_data_refresh_delay = 600
+
+prefs = {
+    "self_ign": "",
+    "player_data_refresh_delay": 3,
+    "base_data_refresh_delay": 600
+
+}
 
 
-calculator = Calculator()
-data_finder = Data(self_ign)
+calculator = Calculator(prefs)
 
 
 def select_mode():
     running = False
     while not running:
-        mode = input("""Select mode\nHunting -> 1\nPlayer Finder -> 2\nEnter choice: """)
+        #mode = int(input("""Select mode\nHunting -> 1\nPlayer Finder -> 2\nEnter choice: """))
+        mode = 1
 
         if mode == 1:
-            hunter = Hunter(calculator, data_finder, player_data_refresh_delay, base_data_refresh_delay)
+            hunter = Hunter(calculator, prefs)
             running = True
             return hunter
 

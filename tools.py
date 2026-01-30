@@ -5,16 +5,26 @@ PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
 
 
-class Data:
-    def __init__(self):
-        pass
+class Calculator:
+    def __init__(self, prefs):
+        self.self_ign = prefs["self_ign"]
 
-    def refresh_player_data(self) -> list:
+        self.player_refresh_delay = prefs["player_data_refresh_delay"]
+        self.player_activity_timeout = 15
+
+        self.recent_players = {}  # visible within last 30 seconds +-
+        self.logged_players = []  # visible ever
+
+    def refresh_player_data(self, exclude_self: bool = True) -> list:
         self.visible_players = []  # Visible right now
 
         response = get(PLAYERS_ENDPOINT).json()
 
         for player in response["players"]:
+            if exclude_self:
+                if player["name"] == self.self_ign:
+                    continue
+
             self.visible_players.append(player["name"])
             if player["name"] not in self.logged_players:
                 self.logged_players.append(player["name"])
@@ -37,9 +47,9 @@ class Data:
 
                 if player_name in self.recent_players:
                     self.recent_players[player_name].is_visible = False
-                    self.recent_players[player_name].time_since_visible += refresh_delay
+                    self.recent_players[player_name].time_since_visible += self.player_refresh_delay
 
-                    if self.recent_players[player_name].time_since_visible > player_activity_timeout:
+                    if self.recent_players[player_name].time_since_visible > self.player_activity_timeout:
                         self.recent_players.pop(player_name)
 
     def refresh_base_data(self):
@@ -51,7 +61,7 @@ class Data:
 
         self.nation_spawns = {}
 
-        # towns_coords and town_coords is specifically for determining whether a point is in any town
+        # towns_coords and town_coords are specifically for determining whether a point is in any town
         # visualisation_coords is for visualising coordinates (both require a different format)
         towns_coords = []
 
@@ -84,19 +94,6 @@ class Data:
 
                 nation_spawn_point = Coordinates(town["point"]["x"], 0, town["point"]["z"])
                 self.nation_spawns[nation_name] = nation_spawn_point
-
-        if not self.already_plotted:
-            self.already_plotted = True
-            # uncomment to enable map
-            plot_process = Process(target=self.plot_map, args=(map, ))
-            plot_process.start()
-
-
-class Calculator:
-    def __init__(self, my_name: str):
-        self.my_name = my_name
-
-        self.already_plotted = False
 
     def get_player_visibility_status(self, player_name):
         if player_name in self.visible_players:
@@ -156,3 +153,6 @@ class Calculator:
         coords = self.recent_players[player_name].coords
         closest_spawn = self.find_nearest_nation_spawn(coords)
         return closest_spawn
+
+
+# Hopefully in future, seperate data from calculator
