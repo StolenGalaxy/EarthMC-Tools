@@ -18,7 +18,7 @@ calculator = Calculator(prefs)
 def select_mode():
     running = False
     while not running:
-        #mode = int(input("""Select mode\nHunting -> 1\nPlayer Finder -> 2\nEnter choice: """))
+        # mode = int(input("""Select mode\nHunting -> 1\nPlayer Finder -> 2\nEnter choice: """))
         mode = 1
 
         if mode == 1:

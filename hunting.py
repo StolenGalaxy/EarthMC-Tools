@@ -2,10 +2,6 @@ from time import sleep
 
 import pyperclip
 
-refresh_delay = 10
-player_activity_timeout = 30
-base_refresh_delay = 120
-
 
 class Hunter:
     def __init__(self, calculator, prefs):
@@ -50,7 +46,7 @@ class Hunter:
         while True:
             self.calculator.refresh_player_data()
 
-            if number_of_refreshes * refresh_delay > base_refresh_delay or number_of_refreshes == 0:
+            if number_of_refreshes * self.player_refresh_delay > self.base_refresh_delay or number_of_refreshes == 0:
                 self.calculator.refresh_base_data()
                 number_of_refreshes = 0
 
@@ -61,5 +57,5 @@ class Hunter:
 
             pyperclip.copy(f"#goto {target_data[1].X} {target_data[1].Z}")
 
-            sleep(refresh_delay)
+            sleep(self.player_refresh_delay)
             number_of_refreshes += 1

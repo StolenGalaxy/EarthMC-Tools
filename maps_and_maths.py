@@ -25,7 +25,6 @@ class Map:
 
         if not self.already_plotted:
             self.already_plotted = True
-            # uncomment to enable map
             plot_process = Process(target=self.plot_map, args=(map, ))
             plot_process.start()
 
@@ -37,9 +36,8 @@ class Geometry:
     def is_point_in_polygon(self, point: tuple[int, int], polygon: list[int]) -> bool:
         shapely_point = Point(point[0], point[1])
 
-        in_a_town = False
-        for town_coords in self.towns_coords:
-            town_shape = Polygon(town_coords)
-            if town_shape.contains(shapely_point):
-                in_a_town = True
-        return in_a_town
+        shapely_polygon = Polygon(polygon)
+
+        point_in_polygon = shapely_polygon.contains(shapely_point)
+
+        return point_in_polygon

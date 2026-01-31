@@ -1,5 +1,6 @@
 from definitions import Player, Coordinates
 from requests import get
+from maps_and_maths import Geometry
 
 PLAYERS_ENDPOINT = "https://map.earthmc.net/tiles/players.json"
 MARKERS_ENDPOINT = "https://map.earthmc.net/tiles/minecraft_overworld/markers.json"
@@ -12,8 +13,10 @@ class Calculator:
         self.player_refresh_delay = prefs["player_data_refresh_delay"]
         self.player_activity_timeout = 15
 
-        self.recent_players = {}  # visible within last 30 seconds +-
+        self.recent_players = {}  # visible within last +- 15 seconds
         self.logged_players = []  # visible ever
+
+        self.geometry = Geometry()
 
     def refresh_player_data(self, exclude_self: bool = True) -> list:
         self.visible_players = []  # Visible right now
@@ -57,12 +60,9 @@ class Calculator:
 
         towns = response[0]["markers"]
 
-        map = []
-
         self.nation_spawns = {}
 
         # towns_coords and town_coords are specifically for determining whether a point is in any town
-        # visualisation_coords is for visualising coordinates (both require a different format)
         towns_coords = []
 
         for town in towns:
@@ -70,16 +70,12 @@ class Calculator:
 
                 border_points = town["points"][0][0]
 
-                visualisation_coords = []
                 town_coords = []
                 for point in border_points:
-                    visualisation_coords.append([point["x"], point["z"] * -1])
-
                     town_coords.append((point["x"], point["z"]))
                 towns_coords.append(town_coords)
                 self.towns_coords = towns_coords
 
-                map.append(visualisation_coords)
             else:
                 nation_name = str(town["tooltip"]).split("(Capital of ")[1]
                 nation_name = (nation_name.split(")\n")[0]).strip()
@@ -105,14 +101,23 @@ class Calculator:
         else:
             return "unknown"
 
-    def is_player_in_town(self, player_name):
+    def is_player_in_any_town(self, player_name):
 
         player_coords = self.recent_players[player_name].coords
+
+        shapely_coords = [player_coords.X, player_coords.Z]
+
+        in_any_town = False
+        for town_coords in self.towns_coords:
+            in_town = self.geometry.is_point_in_polygon(shapely_coords, town_coords)
+            if in_town:
+                in_any_town = True
+        return in_any_town
 
     def find_out_of_town_players(self):
         out_of_town_players = []
         for player in self.recent_players:
-            in_town = self.is_player_in_town(player)
+            in_town = self.is_player_in_any_town(player)
             if not in_town:
                 out_of_town_players.append(player)
         return sorted(out_of_town_players)
