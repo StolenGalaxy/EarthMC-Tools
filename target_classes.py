@@ -50,9 +50,9 @@ class Hunter:
                 number_of_refreshes = 0
 
             target_data = self.find_optimal_target_with_spawn()
-            print("-----------------------------\n\n")
+            print("-------------\n\n")
             print(f"Optimal target: {target_data[0]}\nCoordinates: ({target_data[1].X}, {target_data[1].Z})\nNearest nation spawn is {target_data[2]} which is {target_data[3]} blocks away")
-            print("\n\n-----------------------------")
+            print("\n\n-------------")
 
             pyperclip.copy(f"#goto {target_data[1].X} {target_data[1].Z}")
 
@@ -68,9 +68,11 @@ class PlayerFinder:
 
         self.properties = required_properties
 
+        self.calculator.refresh_base_data()
+
     def search_players(self):
         self.calculator.refresh_player_data()
-        self.calculator.refresh_base_data()
+
         if "in_town" in self.properties:
             available_players = self.calculator.find_players_by_town_status(self.properties["in_town"])
         else:
@@ -97,9 +99,20 @@ class PlayerFinder:
         return available_players
 
     def run(self):
-        valid_players = self.search_players()
+        while True:
+            print("------------- Searching players -------------")
 
-        for i, player in enumerate(valid_players):
-            nearest_spawn, distance = self.calculator.find_nearest_nation_spawn_to_player(player)
+            valid_players = self.search_players()
 
-            print(f"Player #{i + 1}: {player} - Nearest spawn, {nearest_spawn}, is {distance} blocks away")
+            for i, player in enumerate(valid_players):
+                nearest_spawn, distance = self.calculator.find_nearest_nation_spawn_to_player(player)
+
+                print(f"Player #{i + 1}: {player} - Nearest spawn, {nearest_spawn}, is {distance} blocks away")
+            print("------------- End of player list -------------")
+
+            selected_player = input("Enter number of player to track, or press enter to search again: ")
+
+            if not selected_player:
+                continue
+            else:
+                selected_player = int(selected_player)

@@ -18,7 +18,7 @@ calculator = Calculator(prefs)
 def select_mode():
     running = False
     while not running:
-        mode = int(input("""Select mode\nHunting -> 1\nAnalysing -> 2\nEnter choice: """))
+        mode = int(input("""------------- Select mode -------------\nHunting -> 1\nAnalysing -> 2\nEnter choice: """))
 
         if mode == 1:
             hunter = Hunter(calculator, prefs)
