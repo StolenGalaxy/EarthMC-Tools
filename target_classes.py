@@ -2,6 +2,7 @@ from time import sleep
 
 import pyperclip
 
+
 class Hunter:
     def __init__(self, calculator, prefs):
         self.calculator = calculator
@@ -59,7 +60,6 @@ class Hunter:
             number_of_refreshes += 1
 
 
-
 class PlayerFinder:
     def __init__(self, calculator, prefs, required_properties):
         self.calculator = calculator
@@ -84,9 +84,19 @@ class PlayerFinder:
             check_maximum_spawn = True
         for player in available_players:
             nearest_spawn, nearest_spawn_distance = self.calculator.find_nearest_nation_spawn_to_player(player)
-            print(nearest_spawn_distance)
+
             if check_minimum_spawn:
-                pass
+                if nearest_spawn_distance < self.properties["minimum_spawn_distance"]:
+                    available_players.remove(player)
+                    continue
+
+            if check_maximum_spawn:
+                if nearest_spawn_distance > self.properties["maximum_spawn_distance"]:
+                    available_players.remove(player)
+
+        return available_players
 
     def run(self):
-        self.search_players()
+        results = self.search_players()
+
+        print(results)
