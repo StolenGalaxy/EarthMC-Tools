@@ -1,4 +1,4 @@
-from hunting import Hunter
+from target_classes import Hunter, PlayerFinder
 from tools import Calculator
 
 
@@ -18,8 +18,7 @@ calculator = Calculator(prefs)
 def select_mode():
     running = False
     while not running:
-        # mode = int(input("""Select mode\nHunting -> 1\nPlayer Finder -> 2\nEnter choice: """))
-        mode = 1
+        mode = int(input("""Select mode\nHunting -> 1\nAnalysing -> 2\nEnter choice: """))
 
         if mode == 1:
             hunter = Hunter(calculator, prefs)
@@ -27,8 +26,16 @@ def select_mode():
             return hunter
 
         elif mode == 2:
+            # temp
+            required_properties = {
+                "in_town": False,
+                "minimum_spawn_distance": 0,
+                "maximum_spawn_distance": 10000
+            }
+
+            player_finder = PlayerFinder(calculator, prefs, required_properties)
             running = True
-            # (future implementation)
+            return player_finder
 
 
 def main():

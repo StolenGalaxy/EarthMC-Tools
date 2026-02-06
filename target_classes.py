@@ -2,16 +2,14 @@ from time import sleep
 
 import pyperclip
 
-
 class Hunter:
     def __init__(self, calculator, prefs):
         self.calculator = calculator
-
         self.player_refresh_delay = prefs["player_data_refresh_delay"]
         self.base_refresh_delay = prefs["base_data_refresh_delay"]
 
     def find_optimal_target_with_spawn(self) -> tuple[str, str]:
-        potential_targets = self.calculator.find_out_of_town_players()
+        potential_targets = self.calculator.find_players_by_town_status(False)
 
         shortest_distance = 999999
         optimal_target = ""
@@ -59,3 +57,36 @@ class Hunter:
 
             sleep(self.player_refresh_delay)
             number_of_refreshes += 1
+
+
+
+class PlayerFinder:
+    def __init__(self, calculator, prefs, required_properties):
+        self.calculator = calculator
+        self.player_refresh_delay = prefs["player_data_refresh_delay"]
+        self.base_refresh_delay = prefs["base_data_refresh_delay"]
+
+        self.properties = required_properties
+
+    def search_players(self):
+        self.calculator.refresh_player_data()
+        self.calculator.refresh_base_data()
+        if "in_town" in self.properties:
+            available_players = self.calculator.find_players_by_town_status(self.properties["in_town"])
+        else:
+            available_players = [player for player in self.calculator.recent_players]
+
+        check_minimum_spawn = False
+        check_maximum_spawn = False
+        if "minimum_spawn_distance" in self.properties:
+            check_minimum_spawn = True
+        if "maximum_spawn_distance" in self.properties:
+            check_maximum_spawn = True
+        for player in available_players:
+            nearest_spawn, nearest_spawn_distance = self.calculator.find_nearest_nation_spawn_to_player(player)
+            print(nearest_spawn_distance)
+            if check_minimum_spawn:
+                pass
+
+    def run(self):
+        self.search_players()

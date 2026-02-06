@@ -114,13 +114,18 @@ class Calculator:
                 in_any_town = True
         return in_any_town
 
-    def find_out_of_town_players(self):
-        out_of_town_players = []
+    def find_players_by_town_status(self, wanted_in_town):
+        players = []
         for player in self.recent_players:
             in_town = self.is_player_in_any_town(player)
-            if not in_town:
-                out_of_town_players.append(player)
-        return sorted(out_of_town_players)
+
+            if wanted_in_town:
+                if in_town:
+                    players.append(player)
+            if not wanted_in_town:
+                if not in_town:
+                    players.append(player)
+        return sorted(players)
 
     def calculate_coords_separation(self, coords_1, coords_2):
         x_gap = abs(coords_2.X - coords_1.X)
@@ -160,4 +165,4 @@ class Calculator:
         return closest_spawn
 
 
-# Hopefully in future, seperate data from calculator
+# Hopefully in future, separate data from calculator
